@@ -12,7 +12,8 @@
 // 着色器源码
 const char* vertexShaderSource =
 "#version 330 core                                           \n"
-"layout(location = 0) in vec3 aPos;                          \n"
+// 从 location 0 位置去挖数据，然后塞给 aPos 这个变量
+"layout(location = 6) in vec3 aPos;                          \n"
 "void main() {												\n"
 "	gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);}		\n";
 
@@ -23,10 +24,28 @@ const char* fragmentShaderSource =
 "	FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);} 	 \n";
 
 // 三角形顶点
+
+float vertices0[] = {
+	-0.5f, -0.5f, 0.0f,
+	 0.5f, -0.5f, 0.0f,
+	 0.0f,  0.5f, 0.0f,
+
+	 0.5f, -0.5f, 0.0f,
+	 0.0f,  0.5f, 0.0f,
+	 0.8f,  0.5f, 0.0f,
+};
+
 float vertices[] = {
--0.5f, -0.5f, 0.0f,
- 0.5f, -0.5f, 0.0f,
- 0.0f,  0.5f, 0.0f
+	-0.5f, -0.5f, 0.0f,
+	 0.5f, -0.5f, 0.0f,
+	 0.0f,  0.5f, 0.0f,
+	 0.8f,  0.5f, 0.0f,
+};
+
+// 使用EBO
+unsigned int indices[]{
+	0,1,2,
+	2,3,1 // 正序：2,1,3 逆序：2,3,1
 };
 
 void processInput(GLFWwindow* window) {
@@ -65,6 +84,11 @@ int main() {
 	// 视口
 	glViewport(0, 0, 800, 600);
 
+	// 启用剔除 此处的开启要配合三角形索引正序和逆序
+	/*glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);*/
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
 	unsigned int VAO[10];
 	glGenVertexArrays(1, VAO); // 可以一次造多个VAO
 	glBindVertexArray(VAO[0]); // 现在我们有了一个VAO，接下俩要绑定它
@@ -75,6 +99,12 @@ int main() {
 	glBindBuffer(GL_ARRAY_BUFFER, VBO[0]); // 绑定
 	// 塞进GPU缓冲区 把用户定义的数据复制到目前绑定的buffer上去
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	// 声明EBO
+	unsigned int EBO[10];
+	glGenBuffers(1, EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO[0]);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 	//载入和编译 Shader
 	unsigned int vertexShader;
@@ -97,14 +127,11 @@ int main() {
 	// 设置数据格式 0 对应 顶点着色器中使用layout(location = 0)
 	// 第二个参数指定顶点属性的大小。顶点属性是一个vec3，它由3个值组成，所以大小是3
 	// 第五个参数叫做步长(Stride)，它告诉我们在连续的顶点属性组之间的间隔
-	// 1. 设置顶点属性指针
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
+	// 1. 设置顶点属性指针 
+	// 这里相当于设置了 location = 0 的数据位 可以给着色器使用
+	glVertexAttribPointer(6, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(6);
 
-
-
-	//glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-	
 	// 窗口调整 函数回调
 
 	// 渲染引擎
@@ -120,10 +147,11 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT); // 只清除颜色
 
 		// 在这里绘制物体
-		//glBindVertexArray(VAO[0]); // 绘制第一个VAO, 为什么又绑定一遍？
+		glBindVertexArray(VAO[0]); // 绘制第一个VAO, 为什么又绑定一遍？
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO[0]);
 		glUseProgram(shaderProgram);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-
+		//glDrawArrays(GL_TRIANGLES, 0, 6);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 		// 一直切换 DisplayBuffer 会交换两个色彩缓冲区：一个包含屏幕上所有像素颜色信息的缓冲区
 		// 双缓冲：前缓冲保存着最终输出的图像，它会在屏幕上显示；而所有的的渲染指令都会在后缓冲上绘制。当所有的渲染指令执行完毕后，我们交换(Swap)前缓冲和后缓冲，这样图像就立即呈显出来，之前提到的不真实感就消除了。
