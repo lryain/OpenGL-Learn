@@ -3,11 +3,7 @@
 
 #include<GL\glew.h>
 #include <GLFW\glfw3.h>
-
-//void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-//{
-//	glViewport(0, 0, width, height);
-//}
+#include "Shader.h"
 
 // 着色器源码
 const char* vertexShaderSource =
@@ -26,21 +22,9 @@ const char* fragmentShaderSource =
 "out vec4 FragColor;                              \n"
 "uniform vec4 ourColor;                           \n"
 "void main() {\n									   "
-//"	FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);} 	 \n";
-//"	FragColor = ourColor;}						 \n";
 "	FragColor = vertexColor;}					 \n";
 
 // 三角形顶点
-
-//float vertices0[] = {
-//	-0.5f, -0.5f, 0.0f,
-//	 0.5f, -0.5f, 0.0f,
-//	 0.0f,  0.5f, 0.0f,
-//
-//	 0.5f, -0.5f, 0.0f,
-//	 0.0f,  0.5f, 0.0f,
-//	 0.8f,  0.5f, 0.0f,
-//};
 
 float vertices[] = {
 	-0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
@@ -90,6 +74,9 @@ int main() {
 
 	// 视口
 	glViewport(0, 0, 800, 600);
+
+	//载入着色器
+	Shader myShader("assets/shaders/vertex.glsl", "assets/shaders/fragment.glsl");
 
 	// 启用剔除 此处的开启要配合三角形索引正序和逆序
 	/*glEnable(GL_CULL_FACE);
@@ -161,15 +148,8 @@ int main() {
 		glBindVertexArray(VAO[0]); // 绘制第一个VAO, 为什么又绑定一遍？
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO[0]);
 
-		// 添加uniform变量
-		float currentTime = glfwGetTime();
-		float greenValue = (sin(currentTime) / 2.0f) + 0.5f;
-		// 取得Shader uniform 变量的地址
-		int vertextLocation = glGetUniformLocation(shaderProgram, "ourColor");
-		//更新Program
-		glUseProgram(shaderProgram);
-		// 往ourColor这个Uniform写入数据
-		glUniform4f(vertextLocation, 0, greenValue, 0, 1.0f);
+		myShader.use();
+		//myShader.setBool("test", 1.0f);
 
 		//glDrawArrays(GL_TRIANGLES, 0, 6);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
