@@ -14,32 +14,39 @@ const char* vertexShaderSource =
 "#version 330 core                                           \n"
 // 从 location 0 位置去挖数据，然后塞给 aPos 这个变量
 "layout(location = 6) in vec3 aPos;                          \n"
+"layout(location = 7) in vec3 aColor;                        \n"
+"out vec4 vertexColor;										\n" // 为fragment shader指定一个颜色输出
 "void main() {												\n"
-"	gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);}		\n";
+"	gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);		\n"
+"	vertexColor = vec4(aColor.x, aColor.y, aColor.z, 1.0);}	\n";
 
 const char* fragmentShaderSource =
 "#version 330 core                                \n"
+"in vec4 vertexColor;							  \n"
 "out vec4 FragColor;                              \n"
+"uniform vec4 ourColor;                           \n"
 "void main() {\n									   "
-"	FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);} 	 \n";
+//"	FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);} 	 \n";
+//"	FragColor = ourColor;}						 \n";
+"	FragColor = vertexColor;}					 \n";
 
 // 三角形顶点
 
-float vertices0[] = {
-	-0.5f, -0.5f, 0.0f,
-	 0.5f, -0.5f, 0.0f,
-	 0.0f,  0.5f, 0.0f,
-
-	 0.5f, -0.5f, 0.0f,
-	 0.0f,  0.5f, 0.0f,
-	 0.8f,  0.5f, 0.0f,
-};
+//float vertices0[] = {
+//	-0.5f, -0.5f, 0.0f,
+//	 0.5f, -0.5f, 0.0f,
+//	 0.0f,  0.5f, 0.0f,
+//
+//	 0.5f, -0.5f, 0.0f,
+//	 0.0f,  0.5f, 0.0f,
+//	 0.8f,  0.5f, 0.0f,
+//};
 
 float vertices[] = {
-	-0.5f, -0.5f, 0.0f,
-	 0.5f, -0.5f, 0.0f,
-	 0.0f,  0.5f, 0.0f,
-	 0.8f,  0.5f, 0.0f,
+	-0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
+	 0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
+	 0.0f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f,
+	 0.8f,  0.5f, 0.0f, 1.0f, 0.0f, 1.0f,
 };
 
 // 使用EBO
@@ -87,7 +94,7 @@ int main() {
 	// 启用剔除 此处的开启要配合三角形索引正序和逆序
 	/*glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);*/
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	unsigned int VAO[10];
 	glGenVertexArrays(1, VAO); // 可以一次造多个VAO
@@ -129,8 +136,12 @@ int main() {
 	// 第五个参数叫做步长(Stride)，它告诉我们在连续的顶点属性组之间的间隔
 	// 1. 设置顶点属性指针 
 	// 这里相当于设置了 location = 0 的数据位 可以给着色器使用
-	glVertexAttribPointer(6, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	// 设置数据位置及布局并启用，由于增加了颜色数据步骤要调整为6
+	glVertexAttribPointer(6, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(6);
+	// 设置颜色数据并关启用，第一个参数一般递增即可，作为当前的location，偏移量要修改为3个float的大小
+	glVertexAttribPointer(7, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3*sizeof(float)));
+	glEnableVertexAttribArray(7);
 
 	// 窗口调整 函数回调
 
@@ -149,7 +160,17 @@ int main() {
 		// 在这里绘制物体
 		glBindVertexArray(VAO[0]); // 绘制第一个VAO, 为什么又绑定一遍？
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO[0]);
+
+		// 添加uniform变量
+		float currentTime = glfwGetTime();
+		float greenValue = (sin(currentTime) / 2.0f) + 0.5f;
+		// 取得Shader uniform 变量的地址
+		int vertextLocation = glGetUniformLocation(shaderProgram, "ourColor");
+		//更新Program
 		glUseProgram(shaderProgram);
+		// 往ourColor这个Uniform写入数据
+		glUniform4f(vertextLocation, 0, greenValue, 0, 1.0f);
+
 		//glDrawArrays(GL_TRIANGLES, 0, 6);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
