@@ -141,13 +141,18 @@
   <ItemGroup>
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="stbTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\fragment.glsl" />
     <None Include="assets\shaders\vertex.glsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="assets\images\pic.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
